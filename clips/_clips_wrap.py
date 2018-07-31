@@ -600,6 +600,8 @@ def _py2cl(o):
         return (_c.STRING, str(o))
     elif isinstance(o, unicode):
         return (_c.STRING, str(o))
+    elif o is None:
+        return Nil.clrepr()
     elif t1 in (list, tuple):
         li = []
         for x in o:
@@ -614,19 +616,21 @@ def _py2cl(o):
                         ClipsSymbolType, ClipsInstanceNameType, ClipsNilType):
                 li.append(x.clrepr())
             elif t0 == Fact:
-                li.append((_c.FACT_ADDRESS, o._Fact__fact))
+                li.append((_c.FACT_ADDRESS, x._Fact__fact))
             elif t0 == Instance:
-                li.append((_c.INSTANCE_ADDRESS, o._Instance__instance))
+                li.append((_c.INSTANCE_ADDRESS, x._Instance__instance))
             elif isinstance(x, int):
-                li.append((_c.INTEGER, int(o)))
+                li.append((_c.INTEGER, int(x)))
             elif isinstance(x, long):
-                li.append((_c.INTEGER, int(o)))
+                li.append((_c.INTEGER, int(x)))
             elif isinstance(x, float):
-                li.append((_c.FLOAT, float(o)))
+                li.append((_c.FLOAT, float(x)))
             elif isinstance(x, str):
-                li.append((_c.STRING, str(o)))
+                li.append((_c.STRING, str(x)))
             elif isinstance(x, unicode):
-                li.append((_c.STRING, str(o)))
+                li.append((_c.STRING, str(x)))
+            elif x is None:
+                li.append((Nil.clrepr()))
             else:
                 raise TypeError(
                     "list element of type %s cannot be converted" % t0)
@@ -2489,6 +2493,7 @@ class Instance(object):
         #  interface that can be used to access slots at high level
         #  NOTE: there is a hack that allows the environment version to work
         #        by trying to access the underlying environment object
+
         class __instance_Slots:
             """access instance Slots"""
             def __init__(self, io):
@@ -2521,6 +2526,7 @@ class Instance(object):
 
             def __getstate__(self):
                 raise _c.ClipsError("M03: cannot pickle instance slots")
+
         if _c.isInstance(o): self.__instance = o
         else:
             raise _c.ClipsError("M01: cannot directly create Instance")
@@ -4317,11 +4323,29 @@ def RegisterPythonFunction(func, name=None):
         if rv is None:
             return Nil.clrepr()
         else:
-            return _py2cl(rv)
+            rv_py2cl = _py2cl(rv)
+            return rv_py2cl
+    
+    def asdf(*args):
+        #print name
+        #print type(args)
+        #print args
+        #print type(args[0])
+        #print args[0]
+        #print type(args[0][0])
+        #print args[0][0]
+        #print type(args[0][1])
+        #print args[0][1]        
+        
+        return _extcall_retval(func(*tuple(map(_cl2py, args))))
+    
     if not name:
         name = func.__name__
-    f = lambda *args: _extcall_retval(func(*tuple(map(_cl2py, list(args)))))
-    _c.addPythonFunction(name, f)
+
+    #f = lambda *args: _extcall_retval(func(*tuple(map(_cl2py, list(args)))))
+    #_c.addPythonFunction(name, f)
+    _c.addPythonFunction(name, asdf)
+
 
 def UnregisterPythonFunction(name):
     """unregister the given Python function from CLIPS"""
