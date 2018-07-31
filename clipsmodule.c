@@ -1785,7 +1785,7 @@ BOOL i_py2do_e(void *env, PyObject *p, DATA_OBJECT *o) {
         if(!PyList_Check(value))
             goto fail;
         n = PyList_Size(value);
-        if(n == 0) goto fail;
+        //if(n == 0) goto fail;
         if(!(do_value = EnvCreateMultifield(env, n)))
             goto fail;
         for(i2 = 0; i2 < n; i2++) {
